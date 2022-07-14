@@ -6,3 +6,8 @@
 npm install -g nodemon @serverless-devs/s
 npm install
 ```
+
+# 部署
+```
+npm run deploy
+```
