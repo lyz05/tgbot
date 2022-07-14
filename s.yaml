@@ -1,0 +1,53 @@
+edition: 1.0.0
+name: TGBOT
+# access 是当前应用所需要的密钥信息配置：
+# 密钥配置可以参考：https://www.serverless-devs.com/serverless-devs/command/config
+# 密钥使用顺序可以参考：https://www.serverless-devs.com/serverless-devs/tool#密钥使用顺序与规范
+access: default
+
+vars: # 全局变量
+  region: cn-hongkong
+  service:
+    name: tgbot
+    description: 'TeleGram Bot'
+    internetAccess: true       # 设为true让function可以访问公网
+
+services:
+  tgbot: # 业务名称/模块名称
+    component: fc # 组件名称，Serverless Devs 工具本身类似于一种游戏机，不具备具体的业务能力，组件类似于游戏卡，用户通过向游戏机中插入不同的游戏卡实现不同的功能，即通过使用不同的组件实现不同的具体业务能力
+    actions: # 自定义执行逻辑，关于actions 的使用，可以参考：https://www.serverless-devs.com/serverless-devs/yaml#行为描述
+      pre-deploy: # 在deploy之前运行
+        - component: fc build --use-docker --dockerfile ./Dockerfile # 要运行的组件，格式为【component: 组件名 命令 参数】（可以通过s cli registry search --type Component 获取组件列表）
+      post-deploy: # 在deploy之后运行
+        - run: curl https://tgbot.home999.cc
+    props:
+      region: ${vars.region} 
+      service: ${vars.service}
+      function:
+        name: tgbot
+        description: 'Function Component'
+        caPort: 4000
+        memorySize: 512
+        timeout: 30
+        runtime: custom-container
+        customContainerConfig:
+          image: registry.cn-hongkong.aliyuncs.com/lyz05/tgbot:latest
+        codeUri: ./
+        environmentVariables:
+          TELEGRAM_TOKEN: ${env(TELEGRAM_TOKEN)}
+          URL: https://tgbot.home999.cc
+        instanceConcurrency: 5        # 单实例多并发
+      triggers:
+        - name: http_t
+          type: http
+          config:
+            authType: anonymous
+            methods:
+              - GET
+              - POST
+      customDomains:
+        - domainName: tgbot.home999.cc
+          protocol: HTTP,HTTPS
+          certId: 8097040
+          routeConfigs:
+            - path: /*
