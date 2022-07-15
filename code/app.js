@@ -6,43 +6,19 @@ const url = process.env.URL;
 const port = process.env.PORT || 4000;
 
 const TelegramBot = require('node-telegram-bot-api');
-const express = require('express');
 const { default: axios } = require('axios');
-const { urlencoded } = require('express');
 
 // No need to pass any parameters as we will handle the updates with Express
-const bot = new TelegramBot(TOKEN);
-// Express App Setup
-const app = express();
+const options = {
+    webHook: {
+        // Just use 443 directly
+        port: port
+    }
+};
+const bot = new TelegramBot(TOKEN, options);
+bot.setWebHook(`${url}/bot${TOKEN}`);
 
-// parse the updates to JSON
-app.use(express.json());
 
-// We are receiving updates at the route below!
-app.post(`/bot${TOKEN}`, async (req, res) => {
-    bot.processUpdate(req.body);
-    console.log(req.body);
-    let delay = 5000;
-    setTimeout(() => {
-        let msg = `waiting for ${delay}ms`;
-        console.log(msg)
-        res.send(msg);
-    }, delay);
-});
-
-app.get('/', (req, res) => {
-    bot.getWebHookInfo().then(info => {
-        res.send(`ip_address: ${JSON.stringify(info.ip_address)}`)
-    });
-});
-
-// Start Express Server
-app.listen(port, () => {
-    // This informs the Telegram servers of the new webhook.
-    bot.setWebHook(`${url}/bot${TOKEN}`);
-    console.log(`Express server is listening on ${port}`);
-    console.log(`Telegram bot is listening on ${url}`);
-});
 
 // Just to ping!
 bot.on('message', msg => {
