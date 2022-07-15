@@ -1,21 +1,25 @@
 /* eslint-disable no-console */
 require('dotenv').config()
 
+// Environment variables
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const url = process.env.URL;
 const port = process.env.PORT || 4000;
-
-const YAML = require('yaml');
-const TelegramBot = require('node-telegram-bot-api');
-const { default: axios } = require('axios');
-const OSS = require('ali-oss');
-const client = new OSS({
+const OSS_OPTIONS = {
     region: 'oss-cn-hongkong',
     accessKeyId: process.env.OSS_ACCESS_KEY_ID,
     accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
     bucket: 'hkosslog'
-});
+};
 
+// Import modules
+const YAML = require('yaml');
+const TelegramBot = require('node-telegram-bot-api');
+const { default: axios } = require('axios');
+const OSS = require('ali-oss');
+const client = new OSS(OSS_OPTIONS);
+
+let game = {};
 
 // No need to pass any parameters as we will handle the updates with Express
 const options = {
@@ -87,7 +91,33 @@ bot.onText(/\/sub/, async (msg) => {
 });
 
 bot.onText(/\/game/, (msg) => {
-    bot.sendMessage(msg.chat.id, `我们来玩猜数游戏吧！`);
+    const chatID = msg.chat.id;
+    const guess = parseInt(msg.text.replace("/game", ""));
+    if (game[chatID] == undefined) {
+        game[chatID] = {
+            num: Math.floor(Math.random() * 100),
+            limit: 10,
+        }
+        bot.sendMessage(chatID, `我们来玩猜数游戏吧！`);
+        bot.sendMessage(chatID, `猜一个数字，你有10次机会。范围:[0, 100)`);
+        bot.sendMessage(chatID, `请输入你的猜测：(例：/game 50)`);
+        return;
+    }
+    let {num,limit} = game[chatID];
+    if (limit <= 0) {
+        bot.sendMessage(chatID, `游戏结束！未猜出正确答案，正确答案为：${num}`);
+        game[chatID] = undefined;
+        return;
+    }
+    game[chatID].limit --;
+    if (guess == num) {
+        bot.sendMessage(chatID, `恭喜你猜对了！`);
+        game[chatID] = undefined;
+    } else if (guess > num) {
+        bot.sendMessage(chatID, `你猜的数字太大了！`);
+    } else {
+        bot.sendMessage(chatID, `你猜的数字太小了！`);
+    }
 });
 
 bot.onText(/\/help/, (msg) => {
