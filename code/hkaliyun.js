@@ -14,6 +14,10 @@ module.exports = (app) => {
 
     // Just to ping!
     bot.on('message', msg => {
-        bot.sendMessage(msg.chat.id, 'alive');
+        if (msg.text) {
+            bot.sendMessage(msg.chat.id, msg.text);
+        } else {
+            bot.sendMessage(msg.chat.id, 'I can only understand text messages!');
+        }
     });
 }
