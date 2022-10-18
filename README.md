@@ -11,3 +11,10 @@ npm install
 ```
 npm run deploy
 ```
+
+# 本地调试
+使用Github Codespaces测试，记得将端口改为Public，允许telegram调用
+准备.env文件在项目根目录
+```
+npm run dev
+```

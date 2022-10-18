@@ -3,6 +3,7 @@ module.exports = (app) => {
     const url = process.env.URL;
     const TelegramBot = require('node-telegram-bot-api');
     const bot = new TelegramBot(TOKEN);
+    console.log(`${url}/bot${TOKEN}`);
     bot.setWebHook(`${url}/bot${TOKEN}`);
 
     // We are receiving updates at the route below!

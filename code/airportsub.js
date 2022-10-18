@@ -11,6 +11,7 @@ module.exports = (app) => {
     };
 
     // Import modules
+    const cheerio = require('cheerio');
     const YAML = require('yaml');
     const TelegramBot = require('node-telegram-bot-api');
     const { default: axios } = require('axios');
@@ -119,7 +120,26 @@ module.exports = (app) => {
     });
 
     bot.onText(/\/help/, (msg) => {
-        bot.sendMessage(msg.chat.id, `/start - 欢迎界面\n/game - 猜数游戏\n/sub - 订阅链接\n/register - 注册\n/sendpic - 发送你的头像`);
+        bot.sendMessage(msg.chat.id, `/start - 欢迎界面\n/game - 猜数游戏\n/sub - 订阅链接\n/register - 注册\n/sendpic - 发送你的头像\n/setu - 随机色图，可加编号`);
     });
 
+    bot.onText(/\/setu/, (msg) => {
+        const index = parseInt(msg.text.replace("/setu", ""));
+        bot.sendMessage(msg.chat.id, `色图模式`);
+        let l = [];
+        axios.get('https://asiantolick.com/ajax/buscar_posts.php',{ params: { index } })
+        .then(res => {
+            const $ = cheerio.load(res.data);
+            $('.miniaturaImg').each((i, e) => {
+                setTimeout(() => {
+                    const src = $(e).attr('src');
+                    const alt = $(e).attr('alt');
+                    bot.sendPhoto(msg.chat.id, src, {
+                        caption: alt
+                    });
+                    l.push({ src, alt });
+                }, 1000);
+            });
+        });
+    });
 }
