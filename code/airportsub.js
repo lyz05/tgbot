@@ -126,18 +126,17 @@ module.exports = (app) => {
     bot.onText(/\/setu/, (msg) => {
         const index = parseInt(msg.text.replace("/setu", ""));
         bot.sendMessage(msg.chat.id, `色图模式`);
-        let l = [];
         axios.get('https://asiantolick.com/ajax/buscar_posts.php',{ params: { index } })
         .then(res => {
             const $ = cheerio.load(res.data);
-            $('.miniaturaImg').each((i, e) => {
+            $('.miniatura').each((i, e) => {
                 setTimeout(() => {
-                    const src = $(e).attr('src');
-                    const alt = $(e).attr('alt');
+                    const href = $(e).attr('href');
+                    const src = $(e).find('img').attr('src');
+                    const alt = $(e).find('img').attr('alt');
                     bot.sendPhoto(msg.chat.id, src, {
-                        caption: alt
+                        caption: alt+"\n"+href
                     });
-                    l.push({ src, alt });
                 }, 1000);
             });
         });
