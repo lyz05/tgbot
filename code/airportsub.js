@@ -130,14 +130,10 @@ module.exports = (app) => {
         .then(res => {
             const $ = cheerio.load(res.data);
             $('.miniatura').each((i, e) => {
+                const href = $(e).attr('href');
                 setTimeout(() => {
-                    const href = $(e).attr('href');
-                    const src = $(e).find('img').attr('src');
-                    const alt = $(e).find('img').attr('alt');
-                    bot.sendPhoto(msg.chat.id, src, {
-                        caption: alt+"\n"+href
-                    });
-                }, 1000);
+                    bot.sendMessage(msg.chat.id, href);
+                }, i*250);
             });
         });
     });
