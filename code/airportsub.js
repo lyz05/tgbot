@@ -24,6 +24,12 @@ module.exports = (app) => {
     // No need to pass any parameters as we will handle the updates with Express
     const bot = new TelegramBot(TOKEN);
     bot.setWebHook(`${url}/bot${TOKEN}`);
+    bot.getMe().then((botInfo) => {
+        console.log('Bot info:', botInfo);
+    });
+    bot.getWebHookInfo().then((webhookInfo) => {
+        console.log('Webhook info:', webhookInfo);
+    });
 
     // We are receiving updates at the route below!
     app.post(`/bot${TOKEN}`, (req, res) => {
@@ -39,6 +45,7 @@ module.exports = (app) => {
         }
     });
 
+    // 智能聊天机器人
     bot.on('text', msg => {
         if (msg.text.indexOf('/') == -1) {
             bot.sendMessage(msg.chat.id, 'you said: ' + msg.text);
@@ -49,6 +56,7 @@ module.exports = (app) => {
         }
     });
 
+    // 欢迎页面
     bot.onText(/\/start/, (msg) => {
         let name = [msg.from.first_name];
         if (msg.from.last_name) {
@@ -60,6 +68,7 @@ module.exports = (app) => {
         bot.sendMessage(msg.chat.id, `You can also send me commands like /start, /help.`);
     });
 
+    // 发送用户头像
     bot.onText(/\/sendpic/, (msg) => {
         bot.getUserProfilePhotos(msg.chat.id).then(photos => {
             const photo = photos.photos[0][0];
@@ -121,7 +130,21 @@ module.exports = (app) => {
     });
 
     bot.onText(/\/help/, (msg) => {
-        bot.sendMessage(msg.chat.id, `/start - 欢迎界面\n/game - 猜数游戏\n/sub - 订阅链接\n/register - 注册\n/sendpic - 发送你的头像\n/setu - 随机色图，可加编号`);
+        const helpMsg = [
+            { command: 'start', description: '欢迎界面' },
+            { command: 'game', description: '猜数游戏' },
+            { command: 'sub', description: '订阅链接' },
+            { command: 'register', description: '注册' },
+            { command: 'sendpic', description: '发送你的头像' },
+            { command: 'setu', description: '随机色图，可加编号' },
+            { command: 'goindex', description: '查询GoIndex上的文件' },
+            { command: 'help', description: '帮助' },
+        ];
+        const helpMsgText = helpMsg.map(item => {
+            return `/${item.command} - ${item.description}`;
+        }).join("\n");
+        bot.sendMessage(msg.chat.id, helpMsgText, { parse_mode: "HTML" });
+        bot.setMyCommands(helpMsg);
     });
 
     bot.onText(/\/setu/, (msg) => {
@@ -133,7 +156,13 @@ module.exports = (app) => {
                 $('.miniatura').each((i, e) => {
                     const href = $(e).attr('href');
                     setTimeout(() => {
-                        bot.sendMessage(msg.chat.id, href);
+                        bot.sendMessage(msg.chat.id, href,{
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: '带我去看图', url: href }],
+                                ]
+                            }
+                        });
                     }, i * 250);
                 });
             });
@@ -142,12 +171,14 @@ module.exports = (app) => {
     bot.onText(/\/goindex/, (msg) => {
         const q = msg.text.replace("/goindex ", "")
         bot.sendMessage(msg.chat.id, `正在搜寻“${q}”...`);
-        bot.sendChatAction(msg.chat.id, "upload_photo");
         goindex.query(q).then(res => {
             videos = res.filter(e => e.mimeType == "video/mp4");
             images = res.filter(e => e.mimeType == "image/jpeg");
+            audios = res.filter(e => e.mimeType == "audio/mp3");
             folders = res.filter(e => e.mimeType == "application/vnd.google-apps.folder");
-            bot.sendMessage(msg.chat.id, `共有${images.length}个图片结果，${videos.length}个视频，${folders.length}个目录，搜索结果：`);
+            bot.sendMessage(msg.chat.id, `共有${images.length}个图片结果，${videos.length}个视频，${audios.length}个音乐，${folders.length}个目录，搜索结果：`);
+            bot.sendMessage(msg.chat.id, `图片：`);
+            bot.sendChatAction(msg.chat.id, "upload_photo");
             images = goindex.group(images, 10);
             images.forEach((e, i) => {
                 setTimeout(() => {
@@ -160,16 +191,32 @@ module.exports = (app) => {
                     }));
                 }, i * 2000);
             });
+            bot.sendMessage(msg.chat.id, `视频：`);
             bot.sendChatAction(msg.chat.id, 'upload_video');
             videos = videos.filter(e => e.size < 50 * 1024 * 1024); //筛选小于50MB的视频
             videos.forEach((e, i) => {
                 setTimeout(() => {
                     goindex.id2path(e.id).then(path => {
                         console.log(path);
-                        bot.sendVideo(msg.chat.id, path, { caption: e.name });
+                        bot.sendVideo(msg.chat.id, path, { caption: `${e.name}\n${path}` });
+                    });
+                }, i * 2000);
+            });
+            bot.sendMessage(msg.chat.id, `音乐：`);
+            bot.sendChatAction(msg.chat.id, 'upload_voice');
+            audios = audios.filter(e => e.size < 50 * 1024 * 1024); //筛选小于50MB的音乐
+            audios.forEach((e, i) => {
+                setTimeout(() => {
+                    goindex.id2path(e.id).then(path => {
+                        console.log(path);
+                        bot.sendAudio(msg.chat.id, path, { caption: `${e.name}` });
                     });
                 }, i * 2000);
             });
         })
+    });
+
+    bot.onText(/\/senddice/, (msg) => {
+        bot.sendDice(msg.chat.id, { emoji: "🎲" });
     });
 }
