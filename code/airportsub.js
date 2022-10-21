@@ -14,6 +14,7 @@ module.exports = (app) => {
     const cheerio = require('cheerio');
     const YAML = require('yaml');
     const TelegramBot = require('node-telegram-bot-api');
+    const goindex = require('./goindex');
     const { default: axios } = require('axios');
     const OSS = require('ali-oss');
     const client = new OSS(OSS_OPTIONS);
@@ -126,15 +127,49 @@ module.exports = (app) => {
     bot.onText(/\/setu/, (msg) => {
         const index = parseInt(msg.text.replace("/setu", ""));
         bot.sendMessage(msg.chat.id, `色图模式`);
-        axios.get('https://asiantolick.com/ajax/buscar_posts.php',{ params: { index } })
-        .then(res => {
-            const $ = cheerio.load(res.data);
-            $('.miniatura').each((i, e) => {
-                const href = $(e).attr('href');
-                setTimeout(() => {
-                    bot.sendMessage(msg.chat.id, href);
-                }, i*250);
+        axios.get('https://asiantolick.com/ajax/buscar_posts.php', { params: { index } })
+            .then(res => {
+                const $ = cheerio.load(res.data);
+                $('.miniatura').each((i, e) => {
+                    const href = $(e).attr('href');
+                    setTimeout(() => {
+                        bot.sendMessage(msg.chat.id, href);
+                    }, i * 250);
+                });
             });
-        });
+    });
+
+    bot.onText(/\/goindex/, (msg) => {
+        const q = msg.text.replace("/goindex ", "")
+        bot.sendMessage(msg.chat.id, `正在搜寻“${q}”...`);
+        bot.sendChatAction(msg.chat.id, "upload_photo");
+        goindex.query(q).then(res => {
+            videos = res.filter(e => e.mimeType == "video/mp4");
+            images = res.filter(e => e.mimeType == "image/jpeg");
+            folders = res.filter(e => e.mimeType == "application/vnd.google-apps.folder");
+            bot.sendMessage(msg.chat.id, `共有${images.length}个图片结果，${videos.length}个视频，${folders.length}个目录，搜索结果：`);
+            images = goindex.group(images, 10);
+            images.forEach((e, i) => {
+                setTimeout(() => {
+                    bot.sendMediaGroup(msg.chat.id, e.map(e => {
+                        return {
+                            type: "photo",
+                            media: e.thumbnailLink.replace('=s220', '=s0'),
+                            caption: e.name,
+                        }
+                    }));
+                }, i * 2000);
+            });
+            bot.sendChatAction(msg.chat.id, 'upload_video');
+            videos = videos.filter(e => e.size < 50 * 1024 * 1024); //筛选小于50MB的视频
+            videos.forEach((e, i) => {
+                setTimeout(() => {
+                    goindex.id2path(e.id).then(path => {
+                        console.log(path);
+                        bot.sendVideo(msg.chat.id, path, { caption: e.name });
+                    });
+                }, i * 2000);
+            });
+        })
     });
 }
