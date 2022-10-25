@@ -3,7 +3,7 @@
 
 # 安装依赖
 ```
-npm install -g nodemon @serverless-devs/s
+curl -L https://fly.io/install.sh | sh
 npm install
 ```
 

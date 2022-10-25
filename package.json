@@ -7,7 +7,7 @@
     "start": "node code/app.js",
     "dev": "nodemon code/app.js",
     "clean": "rm -rf node_modules",
-    "deploy": "s deploy",
+    "deploy": "flyctl deploy",
     "logs": "heroku logs --tail -a lyz05tgbot"
   },
   "repository": {
