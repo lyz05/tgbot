@@ -1,6 +1,4 @@
-module.exports = (app) => {
-    const TOKEN = process.env.TELEGRAM_TOKEN_HKALIYUN;
-    const url = process.env.URL;
+module.exports = (app,url,TOKEN) => {
     const TelegramBot = require('node-telegram-bot-api');
     const bot = new TelegramBot(TOKEN);
     bot.setWebHook(`${url}/bot${TOKEN}`);
@@ -49,4 +47,5 @@ module.exports = (app) => {
         bot.sendMessage(msg.chat.id, JSON.stringify(msg.contact));
     });
     
+    return bot;
 }

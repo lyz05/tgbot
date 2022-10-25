@@ -1,8 +1,6 @@
-module.exports = (app) => {
+module.exports = (app,url,TOKEN) => {
 
     // Environment variables
-    const TOKEN = process.env.TELEGRAM_TOKEN_AIRPORTSUB;
-    const url = process.env.URL;
     const OSS_OPTIONS = {
         region: 'oss-cn-hongkong',
         accessKeyId: process.env.OSS_ACCESS_KEY_ID,
@@ -14,7 +12,7 @@ module.exports = (app) => {
     const cheerio = require('cheerio');
     const YAML = require('yaml');
     const TelegramBot = require('node-telegram-bot-api');
-    const goindex = require('./goindex');
+    const goindex = require('../goindex');
     const { default: axios } = require('axios');
     const OSS = require('ali-oss');
     const client = new OSS(OSS_OPTIONS);
@@ -24,12 +22,6 @@ module.exports = (app) => {
     // No need to pass any parameters as we will handle the updates with Express
     const bot = new TelegramBot(TOKEN);
     bot.setWebHook(`${url}/bot${TOKEN}`);
-    bot.getMe().then((botInfo) => {
-        console.log('Bot info:', botInfo);
-    });
-    bot.getWebHookInfo().then((webhookInfo) => {
-        console.log('Webhook info:', webhookInfo);
-    });
 
     // We are receiving updates at the route below!
     app.post(`/bot${TOKEN}`, (req, res) => {
@@ -156,7 +148,7 @@ module.exports = (app) => {
                 $('.miniatura').each((i, e) => {
                     const href = $(e).attr('href');
                     setTimeout(() => {
-                        bot.sendMessage(msg.chat.id, href,{
+                        bot.sendMessage(msg.chat.id, href, {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{ text: '带我去看图', url: href }],
@@ -197,7 +189,7 @@ module.exports = (app) => {
                 setTimeout(() => {
                     goindex.id2path(e.id).then(path => {
                         console.log(path);
-                        bot.sendVideo(msg.chat.id, encodeURI(path), { 
+                        bot.sendVideo(msg.chat.id, encodeURI(path), {
                             caption: `${e.name}`,
                             reply_markup: {
                                 inline_keyboard: [
@@ -223,4 +215,5 @@ module.exports = (app) => {
     bot.onText(/\/senddice/, (msg) => {
         bot.sendDice(msg.chat.id, { emoji: "🎲" });
     });
+    return bot;
 }
