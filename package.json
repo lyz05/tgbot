@@ -8,7 +8,7 @@
     "dev": "nodemon code/app.js",
     "clean": "rm -rf node_modules",
     "deploy": "flyctl deploy",
-    "logs": "heroku logs --tail -a lyz05tgbot"
+    "logs": "flyctl logs -a lyz05-tgbot"
   },
   "repository": {
     "type": "git",

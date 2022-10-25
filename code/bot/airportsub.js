@@ -3,8 +3,8 @@ module.exports = (app,url,TOKEN) => {
     // Environment variables
     const OSS_OPTIONS = {
         region: 'oss-cn-hongkong',
-        accessKeyId: process.env.OSS_ACCESS_KEY_ID,
-        accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+        accessKeyId: process.env.ALI_ACCESS_KEY,
+        accessKeySecret: process.env.ALI_SECRET,
         bucket: 'hkosslog'
     };
 

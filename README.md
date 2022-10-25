@@ -4,11 +4,13 @@
 # 安装依赖
 ```
 curl -L https://fly.io/install.sh | sh
+npm install nodemon -g
 npm install
 ```
 
 # 部署
 ```
+flyctl secrets set ALI_ACCESS_KEY=$ALI_ACCESS_KEY ALI_SECRET=$ALI_SECRET TELEGRAM_TOKEN_AIRPORTSUB=$TELEGRAM_TOKEN_AIRPORTSUB TELEGRAM_TOKEN_HKALIYUN=$TELEGRAM_TOKEN_HKALIYUN
 npm run deploy
 ```
 
@@ -17,10 +19,6 @@ npm run deploy
 
 准备.env文件在项目根目录
 ```
-TELEGRAM_TOKEN_AIRPORTSUB=
-TELEGRAM_TOKEN_HKALIYUN=
-OSS_ACCESS_KEY_ID=
-OSS_ACCESS_KEY_SECRET=
 URL=https://lyz05-tgbot-977w997pw59f7964-4000.githubpreview.dev
 ```
 运行
