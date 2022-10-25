@@ -172,12 +172,13 @@ module.exports = (app) => {
         const q = msg.text.replace("/goindex ", "")
         bot.sendMessage(msg.chat.id, `正在搜寻“${q}”...`);
         goindex.query(q).then(res => {
-            videos = res.filter(e => e.mimeType == "video/mp4");
+            //筛选符合条件的文件
+            videos = res.filter(e => e.mimeType == "video/mp4").filter(e => e.size < 50 * 1024 * 1024);
             images = res.filter(e => e.mimeType == "image/jpeg");
-            audios = res.filter(e => e.mimeType == "audio/mp3");
+            audios = res.filter(e => e.mimeType == "audio/mp3").filter(e => e.size < 50 * 1024 * 1024);
             folders = res.filter(e => e.mimeType == "application/vnd.google-apps.folder");
+
             bot.sendMessage(msg.chat.id, `共有${images.length}个图片结果，${videos.length}个视频，${audios.length}个音乐，${folders.length}个目录，搜索结果：`);
-            bot.sendMessage(msg.chat.id, `图片：`);
             bot.sendChatAction(msg.chat.id, "upload_photo");
             images = goindex.group(images, 10);
             images.forEach((e, i) => {
@@ -191,20 +192,23 @@ module.exports = (app) => {
                     }));
                 }, i * 2000);
             });
-            bot.sendMessage(msg.chat.id, `视频：`);
             bot.sendChatAction(msg.chat.id, 'upload_video');
-            videos = videos.filter(e => e.size < 50 * 1024 * 1024); //筛选小于50MB的视频
             videos.forEach((e, i) => {
                 setTimeout(() => {
                     goindex.id2path(e.id).then(path => {
                         console.log(path);
-                        bot.sendVideo(msg.chat.id, path, { caption: `${e.name}\n${path}` });
+                        bot.sendVideo(msg.chat.id, encodeURI(path), { 
+                            caption: `${e.name}`,
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: '带我去看片', url: encodeURI(path) }],
+                                ]
+                            }
+                        });
                     });
                 }, i * 2000);
             });
-            bot.sendMessage(msg.chat.id, `音乐：`);
             bot.sendChatAction(msg.chat.id, 'upload_voice');
-            audios = audios.filter(e => e.size < 50 * 1024 * 1024); //筛选小于50MB的音乐
             audios.forEach((e, i) => {
                 setTimeout(() => {
                     goindex.id2path(e.id).then(path => {
